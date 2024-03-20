@@ -4,9 +4,6 @@
 namespace SSD_Components
 {
 	unsigned int Block_Pool_Slot_Type::Page_vector_size = 0;
-
-	unsigned int Block_Pool_Slot_Type::SubPage_vector_size = 0;
-
 	Flash_Block_Manager_Base::Flash_Block_Manager_Base(GC_and_WL_Unit_Base* gc_and_wl_unit, unsigned int max_allowed_block_erase_count, unsigned int total_concurrent_streams_no,
 		unsigned int channel_count, unsigned int chip_no_per_channel, unsigned int die_no_per_chip, unsigned int plane_no_per_die,
 		unsigned int block_no_per_plane, unsigned int page_no_per_block)
@@ -14,7 +11,6 @@ namespace SSD_Components
 		channel_count(channel_count), chip_no_per_channel(chip_no_per_channel), die_no_per_chip(die_no_per_chip), plane_no_per_die(plane_no_per_die),
 		block_no_per_plane(block_no_per_plane), pages_no_per_block(page_no_per_block)
 	{
-
 		plane_manager = new PlaneBookKeepingType***[channel_count];
 		for (unsigned int channelID = 0; channelID < channel_count; channelID++) {
 			plane_manager[channelID] = new PlaneBookKeepingType**[chip_no_per_channel];
@@ -29,11 +25,6 @@ namespace SSD_Components
 						plane_manager[channelID][chipID][dieID][planeID].Free_pages_count = block_no_per_plane * pages_no_per_block;
 						plane_manager[channelID][chipID][dieID][planeID].Valid_pages_count = 0;
 						plane_manager[channelID][chipID][dieID][planeID].Invalid_pages_count = 0;
-
-						plane_manager[channelID][chipID][dieID][planeID].Total_subpages_count = block_no_per_plane * pages_no_per_block*ALIGN_UNIT_SIZE;
-						plane_manager[channelID][chipID][dieID][planeID].Free_subpages_count = block_no_per_plane * pages_no_per_block*ALIGN_UNIT_SIZE;
-						plane_manager[channelID][chipID][dieID][planeID].Valid_subpages_count = 0;
-						plane_manager[channelID][chipID][dieID][planeID].Invalid_subpages_count = 0;
 						plane_manager[channelID][chipID][dieID][planeID].Ongoing_erase_operations.clear();
 						plane_manager[channelID][chipID][dieID][planeID].Blocks = new Block_Pool_Slot_Type[block_no_per_plane];
 						
@@ -41,9 +32,6 @@ namespace SSD_Components
 						for (unsigned int blockID = 0; blockID < block_no_per_plane; blockID++) {
 							plane_manager[channelID][chipID][dieID][planeID].Blocks[blockID].BlockID = blockID;
 							plane_manager[channelID][chipID][dieID][planeID].Blocks[blockID].Current_page_write_index = 0;
-
-							plane_manager[channelID][chipID][dieID][planeID].Blocks[blockID].Current_subpage_write_index = 0;
-
 							plane_manager[channelID][chipID][dieID][planeID].Blocks[blockID].Current_status = Block_Service_Status::IDLE;
 							plane_manager[channelID][chipID][dieID][planeID].Blocks[blockID].Invalid_page_count = 0;
 							plane_manager[channelID][chipID][dieID][planeID].Blocks[blockID].Erase_count = 0;
@@ -52,24 +40,11 @@ namespace SSD_Components
 							plane_manager[channelID][chipID][dieID][planeID].Blocks[blockID].Erase_transaction = NULL;
 							plane_manager[channelID][chipID][dieID][planeID].Blocks[blockID].Ongoing_user_program_count = 0;
 							plane_manager[channelID][chipID][dieID][planeID].Blocks[blockID].Ongoing_user_read_count = 0;
-
-							
-							Block_Pool_Slot_Type::SubPage_vector_size = (pages_no_per_block*ALIGN_UNIT_SIZE) / (sizeof(uint64_t) * 8) + ((pages_no_per_block * ALIGN_UNIT_SIZE) % (sizeof(uint64_t) * 8) == 0 ? 0 : 1);
-							//std::cout << "subpage vector size: " << Block_Pool_Slot_Type::SubPage_vector_size << std::endl;
-							plane_manager[channelID][chipID][dieID][planeID].Blocks[blockID].Invalid_Subpage_bitmap = new uint64_t[Block_Pool_Slot_Type::SubPage_vector_size];
-							
-							for (unsigned int i = 0; i < Block_Pool_Slot_Type::SubPage_vector_size; i++) {
-								plane_manager[channelID][chipID][dieID][planeID].Blocks[blockID].Invalid_Subpage_bitmap[i] = All_VALID_PAGE;
-							}
-							
-
 							Block_Pool_Slot_Type::Page_vector_size = pages_no_per_block / (sizeof(uint64_t) * 8) + (pages_no_per_block % (sizeof(uint64_t) * 8) == 0 ? 0 : 1);
-							plane_manager[channelID][chipID][dieID][planeID].Blocks[blockID].Invalid_page_bitmap = new uint64_t[Block_Pool_Slot_Type::Page_vector_size];		
+							plane_manager[channelID][chipID][dieID][planeID].Blocks[blockID].Invalid_page_bitmap = new uint64_t[Block_Pool_Slot_Type::Page_vector_size];
 							for (unsigned int i = 0; i < Block_Pool_Slot_Type::Page_vector_size; i++) {
-								plane_manager[channelID][chipID][dieID][planeID].Blocks[blockID].Invalid_page_bitmap[i] = All_VALID_PAGE;														
+								plane_manager[channelID][chipID][dieID][planeID].Blocks[blockID].Invalid_page_bitmap[i] = All_VALID_PAGE;
 							}
-
-						
 							plane_manager[channelID][chipID][dieID][planeID].Add_to_free_block_pool(&plane_manager[channelID][chipID][dieID][planeID].Blocks[blockID], false);
 						}
 						plane_manager[channelID][chipID][dieID][planeID].Data_wf = new Block_Pool_Slot_Type*[total_concurrent_streams_no];
@@ -84,27 +59,16 @@ namespace SSD_Components
 				}
 			}
 		}
-
-
-		Stats::Physical_page_count = channel_count*chip_no_per_channel*plane_no_per_die*block_no_per_plane*page_no_per_block;
-
-		//js debug: fbm debugging
-		next_logging = 90;
-		block_log = true;
-		debugging();
 	}
 
 	Flash_Block_Manager_Base::~Flash_Block_Manager_Base() 
 	{
-		//js debug: fbm debugging
-		block_log = true;
-		debugging();
 		for (unsigned int channel_id = 0; channel_id < channel_count; channel_id++) {
 			for (unsigned int chip_id = 0; chip_id < chip_no_per_channel; chip_id++) {
 				for (unsigned int die_id = 0; die_id < die_no_per_chip; die_id++) {
 					for (unsigned int plane_id = 0; plane_id < plane_no_per_die; plane_id++) {
 						for (unsigned int blockID = 0; blockID < block_no_per_plane; blockID++) {
-							delete[] plane_manager[channel_id][chip_id][die_id][plane_id].Blocks[blockID].Invalid_page_bitmap;													
+							delete[] plane_manager[channel_id][chip_id][die_id][plane_id].Blocks[blockID].Invalid_page_bitmap;
 						}
 						delete[] plane_manager[channel_id][chip_id][die_id][plane_id].Blocks;
 						delete[] plane_manager[channel_id][chip_id][die_id][plane_id].GC_wf;
@@ -125,22 +89,14 @@ namespace SSD_Components
 		this->gc_and_wl_unit = gcwl;
 	}
 
-
 	void Block_Pool_Slot_Type::Erase()
 	{
 		Current_page_write_index = 0;
-
-		Current_subpage_write_index = 0;
-		Invalid_subpage_count = 0;
-
 		Invalid_page_count = 0;
 		Erase_count++;
-
-		for (unsigned int i = 0; i < Block_Pool_Slot_Type::SubPage_vector_size; i++) {
-			Invalid_Subpage_bitmap[i] = All_VALID_PAGE;
+		for (unsigned int i = 0; i < Block_Pool_Slot_Type::Page_vector_size; i++) {
+			Invalid_page_bitmap[i] = All_VALID_PAGE;
 		}
-
-
 		Stream_id = NO_STREAM;
 		Holds_mapping_data = false;
 		Erase_transaction = NULL;
@@ -157,40 +113,22 @@ namespace SSD_Components
 		new_block->Stream_id = stream_id;
 		new_block->Holds_mapping_data = for_mapping_data;
 		Block_usage_history.push(new_block->BlockID);
-		//std::cout << "Get_a_free_block: remain size(): " << Free_block_pool.size() << std::endl;
-		return new_block;
-	}
 
-	Block_Pool_Slot_Type* PlaneBookKeepingType::Get_a_free_block_b(stream_id_type stream_id, bool for_mapping_data)
-	{
-		Block_Pool_Slot_Type* new_block = NULL;
-		new_block = (*Free_block_pool.rbegin()).second;//Assign a new write frontier block
-		if (Free_block_pool.size() == 0) {
-			PRINT_ERROR("Requesting a free block from an empty pool!")
-		}
-		Free_block_pool.erase(std::next(Free_block_pool.rbegin()).base());
-		new_block->Stream_id = stream_id;
-		new_block->Holds_mapping_data = for_mapping_data;
-		Block_usage_history.push(new_block->BlockID);
-	
 		return new_block;
 	}
-			
+	
 	void PlaneBookKeepingType::Check_bookkeeping_correctness(const NVM::FlashMemory::Physical_Page_Address& plane_address)
 	{
-		//std::cout << "free cnt: " << Free_subpages_count << ", v cnt: " << Valid_subpages_count << ", inV cnt: " << Invalid_subpages_count << std::endl;
-		if (Total_subpages_count != Free_subpages_count + Valid_subpages_count + Invalid_subpages_count) {
-			std::cout << "free cnt: " << Free_subpages_count << ", v cnt: " << Valid_subpages_count << ", inV cnt: " << Invalid_subpages_count << std::endl;
+		if (Total_pages_count != Free_pages_count + Valid_pages_count + Invalid_pages_count) {
 			PRINT_ERROR("Inconsistent status in the plane bookkeeping record!")
 		}
-
-		if (Free_subpages_count == 0) {
+		if (Free_pages_count == 0) {
 			PRINT_ERROR("Plane " << "@" << plane_address.ChannelID << "@" << plane_address.ChipID << "@" << plane_address.DieID << "@" << plane_address.PlaneID << " pool size: " << Get_free_block_pool_size() << " ran out of free pages! Bad resource management! It is not safe to continue simulation!");
 		}
 	}
 
 	unsigned int PlaneBookKeepingType::Get_free_block_pool_size()
-	{	
+	{
 		return (unsigned int)Free_block_pool.size();
 	}
 
@@ -220,8 +158,7 @@ namespace SSD_Components
 			}
 		}
 
-		//return max_erased_block - min_erased_block;
-		return plane_record->Blocks[max_erased_block].Erase_count - plane_record->Blocks[min_erased_block].Erase_count;
+		return max_erased_block - min_erased_block;
 	}
 
 	flash_block_ID_type Flash_Block_Manager_Base::Get_coldest_block_id(const NVM::FlashMemory::Physical_Page_Address& plane_address)
@@ -304,78 +241,4 @@ namespace SSD_Components
 		}
 		return false;
 	}
-
-	bool Flash_Block_Manager_Base::Is_Subpage_valid(Block_Pool_Slot_Type* block, flash_page_ID_type page_id, flash_page_ID_type subpage_id)
-	{
-
-		//std::cout << "access idx of Invalid_Subpage_bitmap[]: " << "pg: "<<page_id<<", subpg: "<< subpage_id << std:: endl;
-		if ((block->Invalid_Subpage_bitmap[(page_id*ALIGN_UNIT_SIZE + subpage_id) / 64] & (((uint64_t)1) << ((page_id * ALIGN_UNIT_SIZE) + subpage_id))) == 0) {
-			return true;
-		}
-		return false;
-	}
-
-
-
-
-
-	//js debug: fbm debugging
-	void Flash_Block_Manager_Base::debugging() {
-
-		if(block_log == true){
-			std::cout << "Block Manager Debug: " << std::endl;
-		}
-
-		int total_pages_count = 0;
-		int total_free_pages_count = 0;
-		int total_valid_pages_count = 0;
-		int total_invalid_pages_count = 0;
-		int total_erase_count = 0;
-		for (unsigned int channelID = 0; channelID < channel_count; channelID++) {
-			for (unsigned int chipID = 0; chipID < chip_no_per_channel; chipID++) {
-				for (unsigned int dieID = 0; dieID < die_no_per_chip; dieID++) {
-					//Initialize plane book keeping data structure
-					for (unsigned int planeID = 0; planeID < plane_no_per_die; planeID++) {
-						total_free_pages_count += plane_manager[channelID][chipID][dieID][planeID].Free_subpages_count;
-						total_valid_pages_count += plane_manager[channelID][chipID][dieID][planeID].Valid_subpages_count;
-						total_invalid_pages_count += plane_manager[channelID][chipID][dieID][planeID].Invalid_subpages_count;
-						total_pages_count += plane_manager[channelID][chipID][dieID][planeID].Total_subpages_count;
-						
-						if(block_log == true){
-							std::cout << "\t" << channelID << " " << chipID << " " << dieID << " " << planeID << ": F(" << plane_manager[channelID][chipID][dieID][planeID].Free_subpages_count << ", " 
-								<< ((double)plane_manager[channelID][chipID][dieID][planeID].Free_subpages_count / plane_manager[channelID][chipID][dieID][planeID].Total_subpages_count)
-								<< " ) V( "<< plane_manager[channelID][chipID][dieID][planeID].Valid_subpages_count << " ) IV( " << plane_manager[channelID][chipID][dieID][planeID].Invalid_subpages_count << " )" << std::endl;
-						}
-
-						for (unsigned int blockID = 0; blockID < block_no_per_plane; blockID++) {
-							total_erase_count += plane_manager[channelID][chipID][dieID][planeID].Blocks[blockID].Erase_count;
-						}
-					}
-				}
-			}
-		}
-
-		if(block_log == true){
-			std::cout << "\t total free subpages count: " << total_free_pages_count << std::endl;
-			std::cout << "\t total valid subpages count: " << total_valid_pages_count << std::endl;
-			std::cout << "\t total invalid subpages count: " << total_invalid_pages_count << std::endl;
-			std::cout << "\t total erase count: " << total_erase_count << std::endl;
-			block_log = false;
-		}
-
-		if(((double)total_free_pages_count / total_pages_count * 100) < next_logging){
-			if(next_logging > 10){
-				next_logging -= 10;
-				block_log = true;
-			}
-			else if(next_logging >1){
-				next_logging -= 2;
-				block_log = true;
-			}
-			else{
-				block_log = true;
-			}
-		}
-	}
-
 }

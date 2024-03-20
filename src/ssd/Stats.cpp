@@ -29,8 +29,6 @@ namespace SSD_Components
 	unsigned int  Stats::CMT_miss = 0, Stats::readTR_CMT_miss = 0, Stats::writeTR_CMT_miss = 0;
 	unsigned int  Stats::total_CMT_queries = 0, Stats::total_readTR_CMT_queries = 0, Stats::total_writeTR_CMT_queries = 0;
 
-	unsigned long Stats::Additional_WAF_by_mapping = 0;
-
 	unsigned int Stats::Total_gc_executions = 0, Stats::Total_gc_executions_per_stream[MAX_SUPPORT_STREAMS] = { 0 };
 	unsigned int Stats::Total_page_movements_for_gc = 0, Stats::Total_gc_page_movements_per_stream[MAX_SUPPORT_STREAMS] = { 0 };
 
@@ -40,38 +38,6 @@ namespace SSD_Components
 	unsigned int Stats::CMT_hits_per_stream[MAX_SUPPORT_STREAMS] = { 0 }, Stats::readTR_CMT_hits_per_stream[MAX_SUPPORT_STREAMS] = { 0 }, Stats::writeTR_CMT_hits_per_stream[MAX_SUPPORT_STREAMS] = { 0 };
 	unsigned int Stats::CMT_miss_per_stream[MAX_SUPPORT_STREAMS] = { 0 }, Stats::readTR_CMT_miss_per_stream[MAX_SUPPORT_STREAMS] = { 0 }, Stats::writeTR_CMT_miss_per_stream[MAX_SUPPORT_STREAMS] = { 0 };
 	unsigned int Stats::total_CMT_queries_per_stream[MAX_SUPPORT_STREAMS] = { 0 }, Stats::total_readTR_CMT_queries_per_stream[MAX_SUPPORT_STREAMS] = { 0 }, Stats::total_writeTR_CMT_queries_per_stream[MAX_SUPPORT_STREAMS] = { 0 };
-
-
-	double Stats::Utilization = 0;		
-	unsigned int Stats::WAF_index = 0;
-	
-	double Stats::Accumulated_WAF = 0;
-	double Stats::Accumulated_WAI = 0;
-	double Stats::WAF[MAX_WAF_HISTORY] = {0, }; 	// Physical Write / Host Write
-	double Stats::WAI[MAX_WAF_HISTORY] = {0, };
-
-	
-	unsigned long Stats::Host_write_count = 0;
-	unsigned long Stats::Host_write_count_subpgs = 0;
-	unsigned long Stats::Prev_host_write_count = 0;
-	
-	unsigned long Stats::Physical_write_count = 0;
-	unsigned long Stats::Physical_write_count_subpg = 0;
-	unsigned long Stats::Prev_physical_write_count = 0;
-	unsigned int Stats::Interval_Physical_write_count = 0;
-
-
-
-	unsigned int Stats::Host_alloc = 0;
-	unsigned int Stats::GC_count = 0;
-	unsigned int Stats::Consecutive_gc_write = 0;
-	unsigned int Stats::Max_consecutive_gc_write = 0;
-
-	unsigned int Stats::Physical_page_count = 0;
-
-
-	unsigned long Stats::Erase_count = 0;
-
 
 
 	void Stats::Init_stats(unsigned int channel_no, unsigned int chip_no_per_channel, unsigned int die_no_per_chip, unsigned int plane_no_per_die, 
@@ -118,30 +84,6 @@ namespace SSD_Components
 			Total_wl_executions_per_stream[stream_id] = 0;
 			Total_wl_page_movements_per_stream[stream_id] = 0;
 		}
-
-		Utilization = 0;		
-		WAF_index = 0;
-		
-		Accumulated_WAF = 0;
-		Accumulated_WAI = 0;
-		
-		Host_write_count = 0;
-		Prev_host_write_count = 0;
-		
-		Physical_write_count = 0;
-		Prev_physical_write_count = 0;
-		Interval_Physical_write_count = 0;
-				
-
-			
-		Host_alloc = 0;
-		GC_count = 0;
-		Consecutive_gc_write = 0;
-		Max_consecutive_gc_write = 0;
-
-
-		Erase_count = 0;
-
 	}
 
 	void Stats::Clear_stats(unsigned int channel_no, unsigned int chip_no_per_channel, unsigned int die_no_per_chip, unsigned int plane_no_per_die,

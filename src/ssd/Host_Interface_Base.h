@@ -131,7 +131,6 @@ namespace SSD_Components
 		HostInterface_Types type;
 		LHA_type max_logical_sector_address;
 		unsigned int sectors_per_page;
-		unsigned int sectors_per_subpage; 
 		static Host_Interface_Base* _my_instance;
 		Input_Stream_Manager_Base* input_stream_manager;
 		Request_Fetch_Unit_Base* request_fetch_unit;

@@ -202,6 +202,9 @@
     <ClCompile Include="src\ssd\TSU_OutofOrder.cpp">
       <Filter>ssd</Filter>
     </ClCompile>
+    <ClCompile Include="src\ssd\TSU_Priority_OutofOrder.cpp">
+      <Filter>ssd</Filter>
+    </ClCompile>
     <ClCompile Include="src\ssd\User_Request.cpp">
       <Filter>ssd</Filter>
     </ClCompile>
@@ -459,14 +462,17 @@
     <ClInclude Include="src\ssd\TSU_OutofOrder.h">
       <Filter>ssd</Filter>
     </ClInclude>
+    <ClInclude Include="src\ssd\TSU_Priority_OutofOrder.h">
+      <Filter>ssd</Filter>
+    </ClInclude>
     <ClInclude Include="src\ssd\User_Request.h">
       <Filter>ssd</Filter>
     </ClInclude>
     <ClInclude Include="src\host\SATA_HBA.h">
       <Filter>host</Filter>
     </ClInclude>
-    <ClInclude Include="src\nvm_chip\flash_memory\SubPage.h">
-      <Filter>nvm_chip\flash_memory</Filter>
+    <ClInclude Include="src\ssd\Host_Interface_NVMe_Priorities.h">
+      <Filter>ssd</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
